@@ -1,0 +1,69 @@
+# =============================================================================
+#
+# UNIX-iBuild-Jbosseap_Installation.yml
+#
+# 2019-10-27 1.0.0 Subrata Patel <spatel279@dxc.com>
+#  - Playbook Creation
+#  - Role: UNIX-iBuild-Jbosseap_Installation
+#
+# =============================================================================
+# Parameters:
+# NODE - Target inventory node
+
+# ---
+# SLAM_TASKNAME: UNIX iBuild Jbosseap Installation
+# SLAM_FACT_SYSTEM: CentOS, Linux, Redhat
+# SLAM_Q: Play
+# SLAM_DESCRIPTION: This Playbook for Insatll jboss.
+# SLAM_FF_jbosseapVersion:
+#   type: Text
+#   required: true
+#   ghost: eg. 7.2.0
+#   prompt: Enter jboss version
+# SLAM_FF_UserName:
+#   type: Text
+#   required: true
+#   ghost: eg. jboss
+#   prompt: Enter jboss username
+# SLAM_FF_UserGroup:
+#   type: Text
+#   required: true
+#   ghost: eg. jboss
+#   prompt: Enter jboss group
+# SLAM_FF_StartOptions:
+#   type: Text
+#   required: true
+#   ghost: eg. Follow mdfile
+#   prompt: Enter Starting options
+# SLAM_FF_ServiceName:
+#   type: Text
+#   required: true
+#   ghost: eg. jboss
+#   prompt: Enter Service name
+# SLAM_FF_JMX_USERNAME:
+#   type: Text
+#   required: true
+#   ghost: eg. admin
+#   prompt: Enter JMX User name
+# SLAM_FF_JMX_GROUP:
+#   type: Text
+#   required: true
+#   ghost: eg. admin
+#   prompt: Enter JMX Group
+# SLAM_FF_JMX_PASSWORD:
+#   type: Text
+#   required: true
+#   ghost: eg. admin
+#   prompt: Enter JMX Password
+# SLAM_FF_Domain_options:
+#   type: Text
+#   required: false
+#   prompt: Enter Domain options
+# ---
+
+---
+- hosts: "{{ NODE }}"
+  # become: true
+  # become_method: sudo
+  roles:
+    - UNIX-iBuild-Jbosseap_Installation
