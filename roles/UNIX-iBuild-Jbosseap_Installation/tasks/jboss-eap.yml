@@ -1,0 +1,97 @@
+---
+- name: Check for existing jboss-eap
+  stat:
+    path: "{{InstallPath}}"
+  register: jboss_directory
+
+- name: Test whether jboss-eap works
+  command:
+    "{{InstallPath}}/bin/standalone.sh --version"
+  register: jbosseap_test
+  when: jboss_directory.stat.exists and jboss_directory.stat.isdir
+
+- name: Download jboss-eap from jboss-eap.org and extract the archive
+  include_tasks: jboss-eap_package.yml
+  when: not (jboss_directory.stat.exists and jboss_directory.stat.isdir) or (jbosseap_test.rc != 0 and not ('MaxPermSize=256m; support was removed' in jbosseap_test.stderr and jbosseap_test.rc == 1))
+
+- name: Add User Grop for jboss
+  group:
+    name: "{{UserGroup | default('jboss')}}"
+
+- name: Add user Name for jboss
+  user:
+    name: "{{UserName | default('jboss')}}"
+    group: "{{UserGroup | default('jboss')}}"
+    home: "{{InstallPath}}"
+    state: present
+
+- name: Change ownership of jboss-eap installation path
+  file:
+    path: "{{InstallPath}}"
+    owner: "{{UserName | default('jboss')}}"
+    group: "{{UserGroup | default('jboss')}}"
+    state: directory
+    recurse: true
+
+- block:
+    - name: Reload daemon
+      systemd:
+        daemon_reload: true
+
+    - name: Copy the systemd service
+      template:
+        src: jboss.service_redhat7
+        dest: /etc/systemd/system/{{ServiceName}}.service
+        mode: 0755
+      register: service_file
+
+    - name: Reload daemon
+      systemd:
+        daemon_reload: true
+
+    - name: Enable jboss-eap to be started at boot
+      systemd:
+        name: "{{ServiceName}}.service"
+        enabled: true
+        state: stopped
+      when: service_file.changed
+      notify:
+        - daemon reload
+
+    - name: Start jboss-eap
+      systemd:
+        name: "{{ServiceName}}.service"
+        state: started
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '7' or ansible_distribution == "RedHat" and ansible_distribution_major_version == '7'
+
+- block:
+    - name: Copy the service file
+      template:
+        src: jboss.service_redhat6
+        dest: /etc/init.d/{{ServiceName}}
+        mode: 0755
+      register: service_file
+
+    - name: Enable jboss-eap to be started at boot
+      service:
+        name: "{{ServiceName}}"
+        enabled: true
+        state: stopped
+      when: service_file.changed
+
+    - name: Start jboss-eap
+      service:
+        name: "{{ServiceName}}"
+        state: started
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == '6' or ansible_distribution == "RedHat" and ansible_distribution_major_version == '6'
+
+- name: Change ownership of jboss-eap installation
+  file:
+    path: "{{InstallPath}}"
+    owner: "{{UserName | default('jboss')}}"
+    group: "{{UserGroup | default('jboss')}}"
+    state: directory
+    recurse: true
+
+- name: Create JMX User
+  command: "{{InstallPath}}/bin/add-user.sh -u '{{JMX_USERNAME}}' -g '{{JMX_GROUP}}' -p '{{JMX_PASSWORD}}'"

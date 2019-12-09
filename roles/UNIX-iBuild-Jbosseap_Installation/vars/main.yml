@@ -1,0 +1,10 @@
+---
+InstallPath: /opt/{{ServiceName}}
+url: https://artifactory.csc.com/artifactory/installers/JBoss%20EAP
+TempDir: /tmp
+Domain: "{{Domain_options | default('') }}"
+JMX_USERNAME: "admin"
+JMX_GROUP: "admin"
+JMX_PASSWORD: "admin"
+url_username: "installers"
+url_password: "kT%e@3U8W"

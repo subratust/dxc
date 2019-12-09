@@ -1,0 +1,58 @@
+---
+- name: Set date fact
+  set_fact:
+    current_date: "{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}-{{ ansible_date_time.minute }}-{{ ansible_date_time.second }}"
+
+- name: Backup existing install of jboss-eap
+  command: /bin/mv {{InstallPath}} {{InstallPath}}.{{ current_date }}
+  when: jboss_directory.stat.exists and jboss_directory.stat.isdir
+
+- name: Create temp directory
+  file:
+    path: "{{TempDir}}"
+    mode: 0755
+    state: directory
+
+- name: Download jboss-eap {{ JbossVersion }}
+  get_url:
+    url: "{{ url }}/jboss-eap-{{ jbosseapVersion }}.zip"
+    dest: "{{TempDir}}/jboss-eap-{{ jbosseapVersion }}.zip"
+    url_username: '{{ url_username }}'
+    url_password: '{{ url_password }}'
+
+- name: Create installation directory
+  file:
+    path: "{{InstallPath}}.new"
+    mode: 0755
+    state: directory
+
+- name: Extract jboss-eap {{ jbosseapVersion }} archive
+  unarchive:
+    dest: "{{InstallPath}}.new/"
+    src: "{{TempDir}}/jboss-eap-{{ jbosseapVersion }}.zip"
+    copy: false
+
+- name: Move new version into installation path
+  command: "/bin/mv {{InstallPath}}.new/jboss-eap-{{ jbosseapVersion[0:3] }} {{InstallPath}}"
+
+- block:
+    - name: Restore old configuration files
+      command: "/bin/cp -R --backup {{InstallPath}}.{{ current_date }}/{{item}}/configuration {{InstallPath}}/{{item}}/"
+      loop:
+        - appclient
+        - domain
+        - standalone
+
+    - name: Restore old deployments
+      command: "/bin/cp -R --backup {{InstallPath}}.{{ current_date }}/standalone/deployments {{InstallPath}}/standalone/"
+
+    - name: Test whether new jboss-eap works
+      command: "{{InstallPath}}/bin/standalone.sh --version"
+      changed_when: false
+      register: restored_jboss_test
+      ignore_errors: true
+
+    - name: jboss-eap works
+      assert:
+        that: "restored_jboss_test.rc == 0 or ('MaxPermSize=256m; support was removed' in restored_jboss_test.stderr and restored_jboss_test.rc == 1)"
+  when: jboss_directory.stat.exists and jboss_directory.stat.isdir

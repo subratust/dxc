@@ -1,0 +1,21 @@
+[Unit]
+Description=jboss Service
+After=syslog.target network-online.target
+
+[Service]
+User={{UserName | default('jboss')}}
+Group={{UserGroup | default('jboss')}}
+WorkingDirectory={{InstallPath}}
+{% if Domain %}
+ExecStart={{InstallPath}}/bin/domain.sh {{ StartOptions }}
+{% else %}
+ExecStart={{InstallPath}}/bin/standalone.sh {{ StartOptions }}
+{% endif %}
+Restart=always
+KillSignal=SIGQUIT
+Type=simple
+StandardError=syslog
+NotifyAccess=all
+
+[Install]
+WantedBy=multi-user.target
