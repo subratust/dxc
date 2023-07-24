@@ -22,3 +22,64 @@ steps:
     echo Add other tasks to build, test, and deploy your project.
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
+
+- task: MavenAuthenticate@0
+  inputs:
+
+
+
+- task: Maven@4
+  inputs:
+    mavenPomFile: 'pom.xml'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    javaHomeOption: 'JDKVersion'
+    mavenVersionOption: 'Default'
+    mavenAuthenticateFeed: false
+    effectivePomSkip: false
+    sonarQubeRunAnalysis: true
+    sqMavenPluginVersionChoice: 'latest'
+
+- task: Scan
+  inputs:
+    containerImagename:
+# Enable microsoft defender 
+- task: Docker@2
+  inputs:
+    containerRegistry: 'sapientdemosubrat'
+    command: 'push'
+    imageName: 'ImageName'
+    tags: 'latest'
+    
+- task: CopyFiles@2
+  inputs:
+    Contents: '**'
+    TargetFolder: 
+
+- task: AzureRmWebAppDeployment@4
+- task: KubernetesManifest@1
+  inputs:
+    action: 'deploy'
+    connectionType: 'kubernetesServiceConnection'
+
+
+  inputs:
+    ConnectionType: 'AzureRM'
+    appType: 'webAppLinux'
+    WebAppName: 
+    packageForLinux: '$(System.DefaultWorkingDirectory)/**/*.zip'
+#steps:
+#- script: |
+    # Build the Docker image
+ #   docker build -t myregistry.azurecr.io/myapp:$(Build.BuildId) .
+ # displayName: 'Build Docker Image'
+
+#- script: |
+    # Log in to Azure Container Registry (ACR)
+ #   docker login myregistry.azurecr.io -u <ACR_USERNAME> -p <ACR_PASSWORD>
+  #displayName: 'Login to ACR'
+
+#- script: |
+    # Push the Docker image to ACR
+ #   docker push myregistry.azurecr.io/myapp:$(Build.BuildId)
+ # displayName: 'Push Docker Image to ACR'
